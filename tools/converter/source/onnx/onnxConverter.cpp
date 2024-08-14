@@ -124,9 +124,25 @@ int onnx2MNNNet(const std::string inputModel, const std::string bizCode,
         const auto& onnxNode = onnxGraph.node(i);
         const auto& opType   = onnxNode.op_type();
 
+        LXK_DEBUG("node name: %s\n", onnxNode.name().c_str());
+        LXK_DEBUG("node type: %s\n", onnxNode.op_type().c_str());
+        LXK_DEBUG("node inputs: %d\n", onnxNode.input_size());
+        for (int i = 0; i < onnxNode.input_size(); i++) {
+            LXK_DEBUG("  * input%d: %s\n", i, onnxNode.input(i).c_str());
+        }
+        LXK_DEBUG("node outputs: %d\n", onnxNode.output_size());
+        for (int i = 0; i < onnxNode.output_size(); i++) {
+            LXK_DEBUG("  * output%d: %s\n", i, onnxNode.output(i).c_str());
+        }
+        LXK_DEBUG("\n");
+
         // name maybe null, use the first output name as node-name
         const auto& name = onnxNode.output(0);
         auto opConverter = onnxOpConverterSuit::get()->search(opType);
+
+        LXK_DEBUG("op type = %d\n", opConverter->opType());
+        LXK_DEBUG("type = %d\n", opConverter->type());
+        LXK_DEBUG("\n");
 
         MNN::OpT* MNNOp  = new MNN::OpT;
         MNNOp->name      = name;

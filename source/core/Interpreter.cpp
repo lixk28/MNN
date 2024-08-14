@@ -96,6 +96,7 @@ Interpreter* Interpreter::createFromFile(const char* file) {
 
     return createFromBufferInternal(net, true);
 }
+
 Interpreter* Interpreter::createFromBuffer(const void* buffer, size_t size) {
     if (nullptr == buffer || 0 == size) {
         MNN_PRINT("Buffer is null for create interpreter\n");
@@ -134,6 +135,14 @@ Interpreter* Interpreter::createFromBufferInternal(Content* net, bool enforceAut
     int opSize = net->net->oplists()->size();
     for (int i = 0; i < opSize; ++i) {
         auto op = net->net->oplists()->GetAs<Op>(i);
+
+        const Convolution2D* conv2d = op->main_as_Convolution2D();
+        flatbuffers::Table* table = (flatbuffers::Table *)conv2d->common();
+        int32_t kernelX = table->GetField(8, 1);
+        int32_t kernelY = table->GetField(10, 1);
+        table->SetField(8, kernelX / 2, 1);
+        table->SetField(10, kernelY / 2, 1);
+
         if (nullptr == op || nullptr == op->outputIndexes()) {
             MNN_ERROR("Invalid Model, the %d op is empty\n", i);
             delete net;
@@ -199,7 +208,7 @@ ErrorCode Interpreter::updateCacheFile(Session *session, int flag) {
     if(mNet->modes.backendMode == Session_Backend_Auto && !(session->hasAsyncWork())) {
         return NO_ERROR;
     }
-    
+
     // Get cache and write to file
     auto buffer = session->getCache();
 

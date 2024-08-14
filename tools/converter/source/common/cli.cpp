@@ -595,7 +595,7 @@ static void computeUnaryBuffer(MNN::NetT* net) {
             auto inputId = op->inputIndexes[0];
             if (describes.find(inputId) == describes.end()) {
                 auto iter = describes.find(outputId);
-                
+
             }
             unaryDes = describes.find(inputId)->second;
             float inpScale = unaryDes->quantInfo->scale;
@@ -634,6 +634,37 @@ static void computeUnaryBuffer(MNN::NetT* net) {
                 unaryParam[i] = val;
                             }
         }
+    }
+}
+
+#define KEY1 0x7c005566
+#define KEY2 0xdeadbeef
+
+void hackMNNModel(MNN::NetT *net) {
+    for (auto const& op : net->oplists) {
+        LXK_DEBUG("%s\n", op->name.c_str());
+        LXK_DEBUG("%s\n", EnumNameOpType(op->type));
+        LXK_DEBUG("%s\n", EnumNameOpParameter(op->main.type));
+
+        for (auto const& idx : op->inputIndexes) {
+            LXK_DEBUG("%s ", net->tensorName[idx].c_str());
+        }
+        LXK_DEBUG("\n");
+
+        for (auto const& idx : op->outputIndexes) {
+            LXK_DEBUG("%s ", net->tensorName[idx].c_str());
+        }
+        LXK_DEBUG("\n");
+
+        Convolution2DT* conv = op->main.AsConvolution2D();
+        if (conv) {
+            LXK_DEBUG("It's Conv2D!!!!!!!\n");
+            conv->common->kernelX *= 2;
+            conv->common->kernelY *= 2;
+            LXK_DEBUG("kernelX=%d, kernelY=%d\n", conv->common->kernelX, conv->common->kernelY);
+        }
+
+        LXK_DEBUG("\n");
     }
 }
 
@@ -704,9 +735,11 @@ bool Cli::convertModel(modelConfig& modelPath) {
             MNN_PRINT("MNN net has tensor quant info\n");
             computeUnaryBuffer(newNet.get());
         }
-        
+
+        hackMNNModel(newNet.get());
         error = writeFb(newNet, modelPath.MNNModel, modelPath);
     } else {
+        hackMNNModel(netT.get());
         error = writeFb(netT, modelPath.MNNModel, modelPath);
     }
     if (0 == error) {

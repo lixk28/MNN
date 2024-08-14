@@ -33,6 +33,8 @@
 #define MNN_ERROR(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 
+#define LXK_DEBUG(format, ...) printf("\033[31m" format "\033[0m", ##__VA_ARGS__)
+
 #ifdef DEBUG
 #define MNN_ASSERT(x)                                            \
     {                                                            \
